@@ -1,0 +1,20 @@
+body {
+    background-color: black;
+    color: darkred;
+    font-family: "Comic Sans MS";
+    text-align: center;
+}
+
+button {
+    color: darkred;
+    font-family: "Comic Sans MS";
+    background-color: black;
+}
+
+input {
+    border-color: grey;
+    border-width: 5px;
+    color: darkred;
+    font-family: "Comic Sans MS";
+    background-color: black;
+}
