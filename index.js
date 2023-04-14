@@ -14,12 +14,16 @@ const letterToNumber = {
 
 var message = document.getElementById("Message")
 var encodedMessage = document.getElementById("Encoded Message")
+var noise = document.getElementById("noise")
 var encodeText = document.getElementById("encoder")
 var decodeText = document.getElementById("decoder")
+var talkText = document.getElementById("talker")
 var startEn = document.getElementById("encode")
 var startDe = document.getElementById("decode")
+var startLario = document.getElementById("lario")
 var finalEn = document.getElementById("finalEn")
 var finalDe = document.getElementById("finalDe")
+var neilWord = document.getElementById("neilWord")
 
 function encode(inputString) {
       // Convert string to octal ASCII
@@ -180,13 +184,53 @@ function decode(inputString) {
         finalDe.textContent = decodedString;
         return decodedString;
 }
+function intData(inputString) {
+      // Extract the letter and numbers from the input string
+  const letter = inputString[0];
+  var numbers = inputString.slice(1);
+  
+  // Set up base sentences for each letter
+  let baseSentence;
+  switch (letter) {
+    case 'G':
+      baseSentence = 'You should ____ ____ on ____ ____, my ____';
+      break;
+    case 'W':
+      baseSentence = 'Once, I decided to ____ ____ on ____ ____. Tis a wise choice, ____';
+      break;
+    case 'A':
+      baseSentence = 'Clearly, to ____ on the behalf of ____ during ____ ____ is the answer. Remember this, ____.';
+      break;
+    default:
+      return 'Invalid input!';
+  }
+  
+  // Create arrays of words to fill in the blanks based on the numbers
+  const words1 = ['like, groove to', 'save', 'help', 'watch'];
+  const words2 = ['a cat', 'a flower', 'a pen', 'my music'];
+  const words3 = ['a Tuesday', 'a Thursday', 'Halloween', 'Valentines Day'];
+  const words4 = ['this year', 'next year', 'next decade', 'in 3 years'];
+  const words5 = ['buddy', 'pal', 'amigo', 'chum'];
+  
+  let wordsArray;
+  numbers = numbers.split(' ');
+  wordsArray = [words1[numbers[numbers.length - 5]], words2[numbers[numbers.length - 4]], words3[numbers[numbers.length - 3]], words4[numbers[numbers.length - 2]], words5[numbers[numbers.length - 1]]];
+
+  for (var i = 0; i < wordsArray.length; i++) {
+    baseSentence = baseSentence.replace('____', wordsArray[i]);
+    
+    }
+neilWord.textContent = baseSentence;
+}
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
-    console.log(startEn)
     encode(String(message.value));
 });
-
 decodeText.addEventListener("submit", (e) => {
     e.preventDefault();
     decode(String(encodedMessage.value));
+});
+talkText.addEventListener("submit", (e) => {
+    e.preventDefault();
+    intData(String(noise.value));
 });
