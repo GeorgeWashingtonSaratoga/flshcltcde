@@ -403,7 +403,7 @@ function seedRandom(seed) {
   };
 }
 
-versionT.textContent = "Version: 0.2";
+versionT.textContent = "Version: 0.3";
 
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
