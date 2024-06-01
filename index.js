@@ -223,7 +223,7 @@ function intData(inputString) {
 neilWord.textContent = baseSentence;
 }
 
-function processImage(file, callback) {
+function processImage(file, callback, seed) {
   const reader = new FileReader();
   reader.onload = function(event) {
       const img = new Image();
@@ -235,29 +235,31 @@ function processImage(file, callback) {
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          callback(imageData, canvas);
+          callback(imageData, canvas, seed);
       }
   }
   reader.readAsDataURL(file);
 }
 
-function encodeImage(imageData, canvas) {
+function encodeImage(imageData, canvas, seed) {
+  const [blockSizeSeed, swapCountSeed, hueShiftSeed] = parseSeed(seed);
   const data = imageData.data;
-  const shifts = [6, 38, 24, 85, 47];
-  const blockSize = 4 * 5; // Each pixel has 4 values (R, G, B, A)
+  const blockSize = (blockSizeSeed % 10) + 1;
+  const swapCount = (swapCountSeed % 10) + 1;
+  const hueShiftAmount = (hueShiftSeed % 360);
 
-  for (let i = 0; i < data.length; i += blockSize) {
-      let block = [];
-      for (let j = 0; j < 5; j++) {
+  for (let i = 0; i < data.length; i += blockSize * 4) {
+      const block = [];
+      for (let j = 0; j < blockSize; j++) {
           if (i + j * 4 < data.length) {
               block.push(i + j * 4);
           }
       }
-      for (let j = 0; j < block.length; j++) {
-          hueShift(data, block[j], shifts[j]);
+      for (let j = 0; j < swapCount; j++) {
+          swapRandomPixels(data, block, blockSizeSeed + j);
       }
-      if (block.length === 5) {
-          swapPixels(data, block[0], block[4]);
+      for (let j = 0; j < block.length; j++) {
+          hueShift(data, block[j], hueShiftAmount);
       }
   }
 
@@ -266,23 +268,25 @@ function encodeImage(imageData, canvas) {
   document.getElementById('encodedImage').src = encodedImageUrl;
 }
 
-function decodeImage(imageData, canvas) {
+function decodeImage(imageData, canvas, seed) {
+  const [blockSizeSeed, swapCountSeed, hueShiftSeed] = parseSeed(seed);
   const data = imageData.data;
-  const shifts = [6, 38, 24, 85, 47];
-  const blockSize = 4 * 5; // Each pixel has 4 values (R, G, B, A)
+  const blockSize = (blockSizeSeed % 10) + 1;
+  const swapCount = (swapCountSeed % 10) + 1;
+  const hueShiftAmount = (hueShiftSeed % 360);
 
-  for (let i = 0; i < data.length; i += blockSize) {
-      let block = [];
-      for (let j = 0; j < 5; j++) {
+  for (let i = 0; i < data.length; i += blockSize * 4) {
+      const block = [];
+      for (let j = 0; j < blockSize; j++) {
           if (i + j * 4 < data.length) {
               block.push(i + j * 4);
           }
       }
-      if (block.length === 5) {
-          swapPixels(data, block[0], block[4]);
+      for (let j = swapCount - 1; j >= 0; j--) {
+          swapRandomPixels(data, block, blockSizeSeed + j);
       }
       for (let j = 0; j < block.length; j++) {
-          hueShift(data, block[j], -shifts[j]);
+          hueShift(data, block[j], -hueShiftAmount);
       }
   }
 
@@ -303,6 +307,13 @@ function hueShift(data, index, shift) {
   data[index] = rgb[0];
   data[index + 1] = rgb[1];
   data[index + 2] = rgb[2];
+}
+
+function swapRandomPixels(data, block, seed) {
+  const rng = seedRandom(seed);
+  const idx1 = Math.floor(rng() * block.length);
+  const idx2 = Math.floor(rng() * block.length);
+  swapPixels(data, block[idx1], block[idx2]);
 }
 
 function swapPixels(data, index1, index2) {
@@ -371,6 +382,17 @@ function hsvToRgb(h, s, v) {
   return rgb.map(value => Math.round((value + m) * 255));
 }
 
+function parseSeed(seed) {
+  const seeds = seed.split(',').map(Number);
+  if (seeds.length !== 3) throw new Error('Seed must contain three parts separated by commas');
+  return seeds;
+}
+
+function seedRandom(seed) {
+  let x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
     encode(String(message.value));
@@ -382,16 +404,18 @@ decodeText.addEventListener("submit", (e) => {
 document.getElementById('imgEncoder').addEventListener('submit', function(event) {
   event.preventDefault();
   const file = document.getElementById('imageInput').files[0];
-  if (file) {
-      encodeImage(file);
+  const seed = document.getElementById('encodeSeed').value;
+  if (file && seed) {
+      processImage(file, encodeImage, seed);
   }
 });
 
 document.getElementById('imgDecoder').addEventListener('submit', function(event) {
   event.preventDefault();
   const file = document.getElementById('encodedImageInput').files[0];
-  if (file) {
-      decodeImage(file);
+  const seed = document.getElementById('decodeSeed').value;
+  if (file && seed) {
+      processImage(file, decodeImage, seed);
   }
 });
 
