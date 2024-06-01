@@ -222,6 +222,65 @@ function intData(inputString) {
     }
 neilWord.textContent = baseSentence;
 }
+
+function encodeImage(file) {
+  const reader = new FileReader();
+  reader.onload = function(event) {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = function() {
+          const canvas = document.getElementById('encodedCanvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          // Manipulate the pixel data to encode the image
+          for (let i = 0; i < data.length; i += 4) {
+              data[i] = 255 - data[i];       // Invert Red
+              data[i + 1] = 255 - data[i + 1]; // Invert Green
+              data[i + 2] = 255 - data[i + 2]; // Invert Blue
+          }
+
+          ctx.putImageData(imageData, 0, 0);
+          const encodedImageUrl = canvas.toDataURL();
+          document.getElementById('encodedImage').src = encodedImageUrl;
+      }
+  }
+  reader.readAsDataURL(file);
+}
+
+function decodeImage(file) {
+  const reader = new FileReader();
+  reader.onload = function(event) {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = function() {
+          const canvas = document.getElementById('decodedCanvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          // Manipulate the pixel data to decode the image
+          for (let i = 0; i < data.length; i += 4) {
+              data[i] = 255 - data[i];       // Invert Red
+              data[i + 1] = 255 - data[i + 1]; // Invert Green
+              data[i + 2] = 255 - data[i + 2]; // Invert Blue
+          }
+
+          ctx.putImageData(imageData, 0, 0);
+          const decodedImageUrl = canvas.toDataURL();
+          document.getElementById('decodedImage').src = decodedImageUrl;
+      }
+  }
+  reader.readAsDataURL(file);
+}
+
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
     encode(String(message.value));
@@ -230,6 +289,22 @@ decodeText.addEventListener("submit", (e) => {
     e.preventDefault();
     decode(String(encodedMessage.value));
 });
+document.getElementById('imgEncoder').addEventListener('submit', function(event) {
+  event.preventDefault();
+  const file = document.getElementById('imageInput').files[0];
+  if (file) {
+      encodeImage(file);
+  }
+});
+
+document.getElementById('imgDecoder').addEventListener('submit', function(event) {
+  event.preventDefault();
+  const file = document.getElementById('encodedImageInput').files[0];
+  if (file) {
+      decodeImage(file);
+  }
+});
+
 talkText.addEventListener("submit", (e) => {
     e.preventDefault();
     intData(String(noise.value));

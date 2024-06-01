@@ -14,6 +14,20 @@
             <button id = "decode" type = "submit" >Decode</button>
         </form>
         <p id="finalDe">Decoded Text</p>
+
+        <form id="imgEncoder">
+            <input id="imageInput" type="file" accept="image/*">
+            <button id="encodeImg" type="submit">Encode</button>
+        </form>
+        <canvas id="encodedCanvas" style="display: none;"></canvas>
+        <img id="encodedImage" alt="Encoded Image">
+        
+        <form id="imgDecoder">
+            <input id="encodedImageInput" type="file" accept="image/*">
+            <button id="decodeImg" type="submit">Decode</button>
+        </form>
+        <canvas id="decodedCanvas" style="display: none;"></canvas>
+        <img id="decodedImage" alt="Decoded Image">x
         
         <p>In the following form, please type in a G for guidance, W for wisdom, or A for answers.</p>
         <p>Then, type in 5 numbers separated by one space for the sounds your lego device has made. 0 for exclamation, 1 for jumping sound, 2 for coin sound, and 3 for anything else.</p>
