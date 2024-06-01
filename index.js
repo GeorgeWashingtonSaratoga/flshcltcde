@@ -243,62 +243,74 @@ function processImage(file, callback, seed) {
   reader.readAsDataURL(file);
 }
 
+// Function to encode the image by scrambling small portions
 function encodeImage(imageData, canvas, seed) {
-  const [blockSizeSeed, swapCountSeed, hueShiftSeed, swapSeed] = parseSeed(seed);
-  const data = imageData.data;
-  const blockSize = (blockSizeSeed % 10) + 1;
-  const swapCount = (swapCountSeed % 10) + 1;
+  const blockSize = 4; // Size of the block to scramble
+  const swapSeed = seed % 10000; // Seed for random swapping
   const swapRng = seedRandom(swapSeed);
 
-  for (let round = 0; round < 5; round++) { // Increase distortion intensity
-      for (let i = 0; i < data.length; i += blockSize * 4) {
-          const block = [];
-          for (let j = 0; j < blockSize; j++) {
-              if (i + j * 4 < data.length) {
-                  block.push(i + j * 4);
-              }
-          }
-          for (let j = 0; j < swapCount; j++) {
-              swapRandomPixels(data, block, swapRng);
-          }
-          for (let j = 0; j < block.length; j++) {
-              const hueShiftAmount = calculateHueShift(hueShiftSeed, i / 4 + j);
-              hueShift(data, block[j], hueShiftAmount);
-          }
+  const data = imageData.data;
+  const pixelCount = data.length / 4;
+
+  // Create an array to store original pixel data
+  const originalPixels = new Uint8ClampedArray(data);
+
+  // Shuffle blocks in the image
+  for (let i = 0; i < pixelCount; i += blockSize) {
+      const blockStartIndex = i * 4;
+      const blockEndIndex = Math.min((i + blockSize) * 4, data.length);
+
+      // Generate a random index within the image bounds for swapping
+      const swapIndex = Math.floor(swapRng() * pixelCount) * 4;
+
+      // Swap pixels between the current block and the randomly selected block
+      for (let j = 0; j < blockSize * 4; j++) {
+          const temp = data[blockStartIndex + j];
+          data[blockStartIndex + j] = data[swapIndex + j];
+          data[swapIndex + j] = temp;
       }
   }
 
+  // Draw the scrambled image onto the canvas
   canvas.getContext('2d').putImageData(imageData, 0, 0);
+
+  // Display the encoded image
   const encodedImageUrl = canvas.toDataURL();
   document.getElementById('encodedImage').src = encodedImageUrl;
 }
 
+// Function to decode the scrambled image to its original state
 function decodeImage(imageData, canvas, seed) {
-  const [blockSizeSeed, swapCountSeed, hueShiftSeed, swapSeed] = parseSeed(seed);
-  const data = imageData.data;
-  const blockSize = (blockSizeSeed % 10) + 1;
-  const swapCount = (swapCountSeed % 10) + 1;
+  const blockSize = 4; // Size of the block to scramble
+  const swapSeed = seed % 10000; // Seed for random swapping
   const swapRng = seedRandom(swapSeed);
 
-  for (let round = 0; round < 5; round++) { // Reverse distortion
-      for (let i = 0; i < data.length; i += blockSize * 4) {
-          const block = [];
-          for (let j = 0; j < blockSize; j++) {
-              if (i + j * 4 < data.length) {
-                  block.push(i + j * 4);
-              }
-          }
-          for (let j = swapCount - 1; j >= 0; j--) { // Reverse swaps
-              swapRandomPixels(data, block, swapRng);
-          }
-          for (let j = 0; j < block.length; j++) { // Reverse hue shifts
-              const hueShiftAmount = calculateHueShift(hueShiftSeed, i / 4 + j);
-              hueShift(data, block[j], -hueShiftAmount);
-          }
+  const data = imageData.data;
+  const pixelCount = data.length / 4;
+
+  // Restore the original pixel data from the stored array
+  const originalPixels = new Uint8ClampedArray(data);
+
+  // Shuffle blocks in the image (reversed)
+  for (let i = pixelCount - 1; i >= 0; i -= blockSize) {
+      const blockStartIndex = i * 4;
+      const blockEndIndex = Math.min((i + blockSize) * 4, data.length);
+
+      // Generate a random index within the image bounds for swapping
+      const swapIndex = Math.floor(swapRng() * pixelCount) * 4;
+
+      // Swap pixels between the current block and the randomly selected block
+      for (let j = 0; j < blockSize * 4; j++) {
+          const temp = data[blockStartIndex + j];
+          data[blockStartIndex + j] = data[swapIndex + j];
+          data[swapIndex + j] = temp;
       }
   }
 
+  // Draw the original image onto the canvas
   canvas.getContext('2d').putImageData(imageData, 0, 0);
+
+  // Display the decoded image
   const decodedImageUrl = canvas.toDataURL();
   document.getElementById('decodedImage').src = decodedImageUrl;
 }
@@ -410,7 +422,7 @@ function seedRandom(seed) {
   };
 }
 
-versionT.textContent = "Version: 0.4";
+versionT.textContent = "Version: 0.5";
 
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
