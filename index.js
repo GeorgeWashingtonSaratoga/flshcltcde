@@ -223,62 +223,152 @@ function intData(inputString) {
 neilWord.textContent = baseSentence;
 }
 
-function encodeImage(file) {
+function processImage(file, callback) {
   const reader = new FileReader();
   reader.onload = function(event) {
       const img = new Image();
       img.src = event.target.result;
       img.onload = function() {
-          const canvas = document.getElementById('encodedCanvas');
+          const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-
-          // Manipulate the pixel data to encode the image
-          for (let i = 0; i < data.length; i += 4) {
-              data[i] = 255 - data[i];       // Invert Red
-              data[i + 1] = 255 - data[i + 1]; // Invert Green
-              data[i + 2] = 255 - data[i + 2]; // Invert Blue
-          }
-
-          ctx.putImageData(imageData, 0, 0);
-          const encodedImageUrl = canvas.toDataURL();
-          document.getElementById('encodedImage').src = encodedImageUrl;
+          callback(imageData, canvas);
       }
   }
   reader.readAsDataURL(file);
 }
 
-function decodeImage(file) {
-  const reader = new FileReader();
-  reader.onload = function(event) {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = function() {
-          const canvas = document.getElementById('decodedCanvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
+function encodeImage(imageData, canvas) {
+  const data = imageData.data;
+  const shifts = [6, 38, 24, 85, 47];
+  const blockSize = 4 * 5; // Each pixel has 4 values (R, G, B, A)
 
-          // Manipulate the pixel data to decode the image
-          for (let i = 0; i < data.length; i += 4) {
-              data[i] = 255 - data[i];       // Invert Red
-              data[i + 1] = 255 - data[i + 1]; // Invert Green
-              data[i + 2] = 255 - data[i + 2]; // Invert Blue
+  for (let i = 0; i < data.length; i += blockSize) {
+      let block = [];
+      for (let j = 0; j < 5; j++) {
+          if (i + j * 4 < data.length) {
+              block.push(i + j * 4);
           }
-
-          ctx.putImageData(imageData, 0, 0);
-          const decodedImageUrl = canvas.toDataURL();
-          document.getElementById('decodedImage').src = decodedImageUrl;
+      }
+      for (let j = 0; j < block.length; j++) {
+          hueShift(data, block[j], shifts[j]);
+      }
+      if (block.length === 5) {
+          swapPixels(data, block[0], block[4]);
       }
   }
-  reader.readAsDataURL(file);
+
+  canvas.getContext('2d').putImageData(imageData, 0, 0);
+  const encodedImageUrl = canvas.toDataURL();
+  document.getElementById('encodedImage').src = encodedImageUrl;
+}
+
+function decodeImage(imageData, canvas) {
+  const data = imageData.data;
+  const shifts = [6, 38, 24, 85, 47];
+  const blockSize = 4 * 5; // Each pixel has 4 values (R, G, B, A)
+
+  for (let i = 0; i < data.length; i += blockSize) {
+      let block = [];
+      for (let j = 0; j < 5; j++) {
+          if (i + j * 4 < data.length) {
+              block.push(i + j * 4);
+          }
+      }
+      if (block.length === 5) {
+          swapPixels(data, block[0], block[4]);
+      }
+      for (let j = 0; j < block.length; j++) {
+          hueShift(data, block[j], -shifts[j]);
+      }
+  }
+
+  canvas.getContext('2d').putImageData(imageData, 0, 0);
+  const decodedImageUrl = canvas.toDataURL();
+  document.getElementById('decodedImage').src = decodedImageUrl;
+}
+
+function hueShift(data, index, shift) {
+  const r = data[index];
+  const g = data[index + 1];
+  const b = data[index + 2];
+
+  const hsv = rgbToHsv(r, g, b);
+  hsv[0] = (hsv[0] + shift) % 360;
+  const rgb = hsvToRgb(hsv[0], hsv[1], hsv[2]);
+
+  data[index] = rgb[0];
+  data[index + 1] = rgb[1];
+  data[index + 2] = rgb[2];
+}
+
+function swapPixels(data, index1, index2) {
+  for (let i = 0; i < 4; i++) {
+      const temp = data[index1 + i];
+      data[index1 + i] = data[index2 + i];
+      data[index2 + i] = temp;
+  }
+}
+
+function rgbToHsv(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let h = 0;
+  let s = 0;
+  let v = max;
+
+  if (delta !== 0) {
+      s = delta / max;
+
+      switch (max) {
+          case r:
+              h = ((g - b) / delta + (g < b ? 6 : 0)) % 6;
+              break;
+          case g:
+              h = ((b - r) / delta + 2) % 6;
+              break;
+          case b:
+              h = ((r - g) / delta + 4) % 6;
+              break;
+      }
+
+      h *= 60;
+  }
+
+  return [h, s, v];
+}
+
+function hsvToRgb(h, s, v) {
+  const c = v * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = v - c;
+
+  let rgb = [0, 0, 0];
+
+  if (h < 60) {
+      rgb = [c, x, 0];
+  } else if (h < 120) {
+      rgb = [x, c, 0];
+  } else if (h < 180) {
+      rgb = [0, c, x];
+  } else if (h < 240) {
+      rgb = [0, x, c];
+  } else if (h < 300) {
+      rgb = [x, 0, c];
+  } else {
+      rgb = [c, 0, x];
+  }
+
+  return rgb.map(value => Math.round((value + m) * 255));
 }
 
 encodeText.addEventListener("submit", (e) => {
