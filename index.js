@@ -251,18 +251,20 @@ function encodeImage(imageData, canvas, seed) {
   const hueShiftAmount = (hueShiftSeed % 360);
   const swapRng = seedRandom(swapSeed);
 
-  for (let i = 0; i < data.length; i += blockSize * 4) {
-      const block = [];
-      for (let j = 0; j < blockSize; j++) {
-          if (i + j * 4 < data.length) {
-              block.push(i + j * 4);
+  for (let round = 0; round < 5; round++) { // Increase distortion intensity
+      for (let i = 0; i < data.length; i += blockSize * 4) {
+          const block = [];
+          for (let j = 0; j < blockSize; j++) {
+              if (i + j * 4 < data.length) {
+                  block.push(i + j * 4);
+              }
           }
-      }
-      for (let j = 0; j < swapCount; j++) {
-          swapRandomPixels(data, block, swapRng);
-      }
-      for (let j = 0; j < block.length; j++) {
-          hueShift(data, block[j], hueShiftAmount);
+          for (let j = 0; j < swapCount; j++) {
+              swapRandomPixels(data, block, swapRng);
+          }
+          for (let j = 0; j < block.length; j++) {
+              hueShift(data, block[j], hueShiftAmount);
+          }
       }
   }
 
@@ -279,18 +281,20 @@ function decodeImage(imageData, canvas, seed) {
   const hueShiftAmount = (hueShiftSeed % 360);
   const swapRng = seedRandom(swapSeed);
 
-  for (let i = 0; i < data.length; i += blockSize * 4) {
-      const block = [];
-      for (let j = 0; j < blockSize; j++) {
-          if (i + j * 4 < data.length) {
-              block.push(i + j * 4);
+  for (let round = 0; round < 5; round++) { // Reverse distortion
+      for (let i = 0; i < data.length; i += blockSize * 4) {
+          const block = [];
+          for (let j = 0; j < blockSize; j++) {
+              if (i + j * 4 < data.length) {
+                  block.push(i + j * 4);
+              }
           }
-      }
-      for (let j = swapCount - 1; j >= 0; j--) {
-          swapRandomPixels(data, block, swapRng);
-      }
-      for (let j = 0; j < block.length; j++) {
-          hueShift(data, block[j], -hueShiftAmount);
+          for (let j = swapCount - 1; j >= 0; j--) { // Reverse swaps
+              swapRandomPixels(data, block, swapRng);
+          }
+          for (let j = 0; j < block.length; j++) { // Reverse hue shifts
+              hueShift(data, block[j], -hueShiftAmount);
+          }
       }
   }
 
