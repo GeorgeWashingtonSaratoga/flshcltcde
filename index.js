@@ -248,7 +248,6 @@ function encodeImage(imageData, canvas, seed) {
   const data = imageData.data;
   const blockSize = (blockSizeSeed % 10) + 1;
   const swapCount = (swapCountSeed % 10) + 1;
-  const hueShiftAmount = (hueShiftSeed % 360);
   const swapRng = seedRandom(swapSeed);
 
   for (let round = 0; round < 5; round++) { // Increase distortion intensity
@@ -263,6 +262,7 @@ function encodeImage(imageData, canvas, seed) {
               swapRandomPixels(data, block, swapRng);
           }
           for (let j = 0; j < block.length; j++) {
+              const hueShiftAmount = calculateHueShift(hueShiftSeed, i / 4 + j);
               hueShift(data, block[j], hueShiftAmount);
           }
       }
@@ -278,7 +278,6 @@ function decodeImage(imageData, canvas, seed) {
   const data = imageData.data;
   const blockSize = (blockSizeSeed % 10) + 1;
   const swapCount = (swapCountSeed % 10) + 1;
-  const hueShiftAmount = (hueShiftSeed % 360);
   const swapRng = seedRandom(swapSeed);
 
   for (let round = 0; round < 5; round++) { // Reverse distortion
@@ -293,6 +292,7 @@ function decodeImage(imageData, canvas, seed) {
               swapRandomPixels(data, block, swapRng);
           }
           for (let j = 0; j < block.length; j++) { // Reverse hue shifts
+              const hueShiftAmount = calculateHueShift(hueShiftSeed, i / 4 + j);
               hueShift(data, block[j], -hueShiftAmount);
           }
       }
@@ -302,6 +302,13 @@ function decodeImage(imageData, canvas, seed) {
   const decodedImageUrl = canvas.toDataURL();
   document.getElementById('decodedImage').src = decodedImageUrl;
 }
+
+// Function to calculate hue shift based on seed and pixel position
+function calculateHueShift(seed, position) {
+  const multiplier = seed % 360; // Use seed as a multiplier for hue shift
+  return (position * multiplier) % 360; // Calculate hue shift based on pixel position
+}
+
 
 function hueShift(data, index, shift) {
   const r = data[index];
@@ -403,7 +410,7 @@ function seedRandom(seed) {
   };
 }
 
-versionT.textContent = "Version: 0.3";
+versionT.textContent = "Version: 0.4";
 
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
