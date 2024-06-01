@@ -243,11 +243,12 @@ function processImage(file, callback, seed) {
 }
 
 function encodeImage(imageData, canvas, seed) {
-  const [blockSizeSeed, swapCountSeed, hueShiftSeed] = parseSeed(seed);
+  const [blockSizeSeed, swapCountSeed, hueShiftSeed, swapSeed] = parseSeed(seed);
   const data = imageData.data;
   const blockSize = (blockSizeSeed % 10) + 1;
   const swapCount = (swapCountSeed % 10) + 1;
   const hueShiftAmount = (hueShiftSeed % 360);
+  const swapRng = seedRandom(swapSeed);
 
   for (let i = 0; i < data.length; i += blockSize * 4) {
       const block = [];
@@ -257,7 +258,7 @@ function encodeImage(imageData, canvas, seed) {
           }
       }
       for (let j = 0; j < swapCount; j++) {
-          swapRandomPixels(data, block, blockSizeSeed + j);
+          swapRandomPixels(data, block, swapRng);
       }
       for (let j = 0; j < block.length; j++) {
           hueShift(data, block[j], hueShiftAmount);
@@ -270,11 +271,12 @@ function encodeImage(imageData, canvas, seed) {
 }
 
 function decodeImage(imageData, canvas, seed) {
-  const [blockSizeSeed, swapCountSeed, hueShiftSeed] = parseSeed(seed);
+  const [blockSizeSeed, swapCountSeed, hueShiftSeed, swapSeed] = parseSeed(seed);
   const data = imageData.data;
   const blockSize = (blockSizeSeed % 10) + 1;
   const swapCount = (swapCountSeed % 10) + 1;
   const hueShiftAmount = (hueShiftSeed % 360);
+  const swapRng = seedRandom(swapSeed);
 
   for (let i = 0; i < data.length; i += blockSize * 4) {
       const block = [];
@@ -284,7 +286,7 @@ function decodeImage(imageData, canvas, seed) {
           }
       }
       for (let j = swapCount - 1; j >= 0; j--) {
-          swapRandomPixels(data, block, blockSizeSeed + j);
+          swapRandomPixels(data, block, swapRng);
       }
       for (let j = 0; j < block.length; j++) {
           hueShift(data, block[j], -hueShiftAmount);
@@ -310,8 +312,7 @@ function hueShift(data, index, shift) {
   data[index + 2] = rgb[2];
 }
 
-function swapRandomPixels(data, block, seed) {
-  const rng = seedRandom(seed);
+function swapRandomPixels(data, block, rng) {
   const idx1 = Math.floor(rng() * block.length);
   const idx2 = Math.floor(rng() * block.length);
   swapPixels(data, block[idx1], block[idx2]);
@@ -385,15 +386,17 @@ function hsvToRgb(h, s, v) {
 
 function parseSeed(seed) {
   const seeds = seed.split(',').map(Number);
-  if (seeds.length !== 3) throw new Error('Seed must contain three parts separated by commas');
+  if (seeds.length !== 4) throw new Error('Seed must contain four parts separated by commas');
   return seeds;
 }
 
 function seedRandom(seed) {
-  let x = Math.sin(seed++) * 10000;
-  return x - Math.floor(x);
+  let x = Math.sin(seed) * 10000;
+  return function() {
+      x = Math.sin(x) * 10000;
+      return x - Math.floor(x);
+  };
 }
-
 
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
