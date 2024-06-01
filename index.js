@@ -399,8 +399,7 @@ function seedRandom(seed) {
   };
 }
 
-
-versionT.textContent = "Version: 0.1";
+versionT.textContent = "Version: 0.2";
 
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
