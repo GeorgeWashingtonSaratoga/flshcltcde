@@ -271,7 +271,9 @@ function encodeImage(imageData, canvas, seed) {
       }
   }
 
-  // Draw the scrambled image onto the canvas
+  // Reset canvas size and draw the scrambled image onto the canvas
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
   canvas.getContext('2d').putImageData(imageData, 0, 0);
 
   // Display the encoded image
@@ -307,7 +309,9 @@ function decodeImage(imageData, canvas, seed) {
       }
   }
 
-  // Draw the original image onto the canvas
+  // Reset canvas size and draw the original image onto the canvas
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
   canvas.getContext('2d').putImageData(imageData, 0, 0);
 
   // Display the decoded image
@@ -422,7 +426,7 @@ function seedRandom(seed) {
   };
 }
 
-versionT.textContent = "Version: 0.5";
+versionT.textContent = "Version: 0.6";
 
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
