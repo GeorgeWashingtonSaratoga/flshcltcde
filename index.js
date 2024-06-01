@@ -24,6 +24,7 @@ var startLario = document.getElementById("lario")
 var finalEn = document.getElementById("finalEn")
 var finalDe = document.getElementById("finalDe")
 var neilWord = document.getElementById("neilWord")
+var versionT = document.getElementById("versionT")
 
 function encode(inputString) {
       // Convert string to octal ASCII
@@ -397,6 +398,9 @@ function seedRandom(seed) {
       return x - Math.floor(x);
   };
 }
+
+
+versionT.textContent = "Version: 0.1";
 
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
