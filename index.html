@@ -16,21 +16,23 @@
         </form>
         <p id="finalDe">Decoded Text</p>
 
-        <form id="imgEncoder">
-            <input id="imageInput" type="file" accept="image/*">
-            <input id="encodeSeed" type="text" placeholder="Enter seed">
-            <button id="encodeImg" type="submit">Encode</button>
+        <h2>Encrypt Image</h2>
+        <form id="encryptForm">
+            <input type="file" id="encryptImage" accept="image/*" required>
+            <input type="number" id="encryptSeed" placeholder="Enter Seed" required>
+            <button type="submit">Encrypt</button>
         </form>
-        <canvas id="encodedCanvas" style="display: none;"></canvas>
-        <img id="encodedImage" alt="Encoded Image">
-        
-        <form id="imgDecoder">
-            <input id="encodedImageInput" type="file" accept="image/*">
-            <input id="decodeSeed" type="text" placeholder="Enter seed">
-            <button id="decodeImg" type="submit">Decode</button>
+        <canvas id="encryptCanvas" style="display:none;"></canvas>
+        <a id="downloadEncryptedImage" style="display:none;">Download Encrypted Image</a>
+    
+        <h2>Decrypt Image</h2>
+        <form id="decryptForm">
+            <input type="file" id="decryptImage" accept="image/*" required>
+            <input type="number" id="decryptSeed" placeholder="Enter Seed" required>
+            <button type="submit">Decrypt</button>
         </form>
-        <canvas id="decodedCanvas" style="display: none;"></canvas>
-        <img id="decodedImage" alt="Decoded Image">
+        <canvas id="decryptCanvas" style="display:none;"></canvas>
+        <img id="decryptedImage" style="display:none;" alt="Decrypted Image">
         
         <p>In the following form, please type in a G for guidance, W for wisdom, or A for answers.</p>
         <p>Then, type in 5 numbers separated by one space for the sounds your lego device has made. 0 for exclamation, 1 for jumping sound, 2 for coin sound, and 3 for anything else.</p>
@@ -41,4 +43,5 @@
         <p id="neilWord">Word of Neil</p>
     </body>
     <script src = "index.js" type="module"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
 </html>

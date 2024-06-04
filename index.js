@@ -1,3 +1,4 @@
+
 // Letter-to-Number Mapping
 const letterToNumber = {
     'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9,
@@ -224,209 +225,39 @@ function intData(inputString) {
 neilWord.textContent = baseSentence;
 }
 
-
-function processImage(file, callback, seed) {
-  const reader = new FileReader();
-  reader.onload = function(event) {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          callback(imageData, canvas, seed);
+function scramble(data, seed) {
+  const rng = new Math.seedrandom(seed);
+  for (let i = 0; i < data.length; i += 4) {
+      const j = Math.floor(rng() * (data.length / 4)) * 4;
+      for (let k = 0; k < 4; k++) {
+          const temp = data[i + k];
+          data[i + k] = data[j + k];
+          data[j + k] = temp;
       }
   }
-  reader.readAsDataURL(file);
 }
 
-// Function to encode the image by scrambling small portions
-function encodeImage(imageData, canvas, seed) {
-  const blockSize = 4; // Size of the block to scramble
-  const swapSeed = seed % 10000; // Seed for random swapping
-  const swapRng = seedRandom(swapSeed);
-
-  const data = imageData.data;
-  const pixelCount = data.length / 4;
-
-  // Create an array to store original pixel data
-  const originalPixels = new Uint8ClampedArray(data);
-
-  // Shuffle blocks in the image
-  for (let i = 0; i < pixelCount; i += blockSize) {
-      const blockStartIndex = i * 4;
-      const blockEndIndex = Math.min((i + blockSize) * 4, data.length);
-
-      // Generate a random index within the image bounds for swapping
-      const swapIndex = Math.floor(swapRng() * pixelCount) * 4;
-
-      // Swap pixels between the current block and the randomly selected block
-      for (let j = 0; j < blockSize * 4; j++) {
-          const temp = data[blockStartIndex + j];
-          data[blockStartIndex + j] = data[swapIndex + j];
-          data[swapIndex + j] = temp;
+function unscramble(data, seed) {
+  // The unscrambling logic should reverse the scrambling algorithm
+  // Implementing a reversible scrambling algorithm
+  const rng = new Math.seedrandom(seed);
+  const swaps = [];
+  for (let i = 0; i < data.length; i += 4) {
+      const j = Math.floor(rng() * (data.length / 4)) * 4;
+      swaps.push([i, j]);
+  }
+  // Apply swaps in reverse order
+  for (let i = swaps.length - 1; i >= 0; i--) {
+      const [x, y] = swaps[i];
+      for (let k = 0; k < 4; k++) {
+          const temp = data[x + k];
+          data[x + k] = data[y + k];
+          data[y + k] = temp;
       }
   }
-
-  // Reset canvas size and draw the scrambled image onto the canvas
-  canvas.width = imageData.width;
-  canvas.height = imageData.height;
-  canvas.getContext('2d').putImageData(imageData, 0, 0);
-
-  // Display the encoded image
-  const encodedImageUrl = canvas.toDataURL();
-  document.getElementById('encodedImage').src = encodedImageUrl;
 }
 
-// Function to decode the scrambled image to its original state
-function decodeImage(imageData, canvas, seed) {
-  const blockSize = 4; // Size of the block to scramble
-  const swapSeed = seed % 10000; // Seed for random swapping
-  const swapRng = seedRandom(swapSeed);
-
-  const data = imageData.data;
-  const pixelCount = data.length / 4;
-
-  // Restore the original pixel data from the stored array
-  const originalPixels = new Uint8ClampedArray(data);
-
-  // Shuffle blocks in the image (reversed)
-  for (let i = pixelCount - 1; i >= 0; i -= blockSize) {
-      const blockStartIndex = i * 4;
-      const blockEndIndex = Math.min((i + blockSize) * 4, data.length);
-
-      // Generate a random index within the image bounds for swapping
-      const swapIndex = Math.floor(swapRng() * pixelCount) * 4;
-
-      // Swap pixels between the current block and the randomly selected block
-      for (let j = 0; j < blockSize * 4; j++) {
-          const temp = data[blockStartIndex + j];
-          data[blockStartIndex + j] = data[swapIndex + j];
-          data[swapIndex + j] = temp;
-      }
-  }
-
-  // Reset canvas size and draw the original image onto the canvas
-  canvas.width = imageData.width;
-  canvas.height = imageData.height;
-  canvas.getContext('2d').putImageData(imageData, 0, 0);
-
-  // Display the decoded image
-  const decodedImageUrl = canvas.toDataURL();
-  document.getElementById('decodedImage').src = decodedImageUrl;
-}
-
-// Function to calculate hue shift based on seed and pixel position
-function calculateHueShift(seed, position) {
-  const multiplier = seed % 360; // Use seed as a multiplier for hue shift
-  return (position * multiplier) % 360; // Calculate hue shift based on pixel position
-}
-
-
-function hueShift(data, index, shift) {
-  const r = data[index];
-  const g = data[index + 1];
-  const b = data[index + 2];
-
-  const hsv = rgbToHsv(r, g, b);
-  hsv[0] = (hsv[0] + shift) % 360;
-  const rgb = hsvToRgb(hsv[0], hsv[1], hsv[2]);
-
-  data[index] = rgb[0];
-  data[index + 1] = rgb[1];
-  data[index + 2] = rgb[2];
-}
-
-function swapRandomPixels(data, block, rng) {
-  const idx1 = Math.floor(rng() * block.length);
-  const idx2 = Math.floor(rng() * block.length);
-  swapPixels(data, block[idx1], block[idx2]);
-}
-
-function swapPixels(data, index1, index2) {
-  for (let i = 0; i < 4; i++) {
-      const temp = data[index1 + i];
-      data[index1 + i] = data[index2 + i];
-      data[index2 + i] = temp;
-  }
-}
-
-function rgbToHsv(r, g, b) {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const delta = max - min;
-
-  let h = 0;
-  let s = 0;
-  let v = max;
-
-  if (delta !== 0) {
-      s = delta / max;
-
-      switch (max) {
-          case r:
-              h = ((g - b) / delta + (g < b ? 6 : 0)) % 6;
-              break;
-          case g:
-              h = ((b - r) / delta + 2) % 6;
-              break;
-          case b:
-              h = ((r - g) / delta + 4) % 6;
-              break;
-      }
-
-      h *= 60;
-  }
-
-  return [h, s, v];
-}
-
-function hsvToRgb(h, s, v) {
-  const c = v * s;
-  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  const m = v - c;
-
-  let rgb = [0, 0, 0];
-
-  if (h < 60) {
-      rgb = [c, x, 0];
-  } else if (h < 120) {
-      rgb = [x, c, 0];
-  } else if (h < 180) {
-      rgb = [0, c, x];
-  } else if (h < 240) {
-      rgb = [0, x, c];
-  } else if (h < 300) {
-      rgb = [x, 0, c];
-  } else {
-      rgb = [c, 0, x];
-  }
-
-  return rgb.map(value => Math.round((value + m) * 255));
-}
-
-function parseSeed(seed) {
-  const seeds = seed.split(',').map(Number);
-  if (seeds.length !== 4) throw new Error('Seed must contain four parts separated by commas');
-  return seeds;
-}
-
-function seedRandom(seed) {
-  let x = Math.sin(seed) * 10000;
-  return function() {
-      x = Math.sin(x) * 10000;
-      return x - Math.floor(x);
-  };
-}
-
-versionT.textContent = "Version: 0.6";
+versionT.textContent = "Version: 0.7";
 
 encodeText.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -436,24 +267,67 @@ decodeText.addEventListener("submit", (e) => {
     e.preventDefault();
     decode(String(encodedMessage.value));
 });
-document.getElementById('imgEncoder').addEventListener('submit', function(event) {
+document.getElementById('encryptForm').addEventListener('submit', function(event) {
   event.preventDefault();
-  const file = document.getElementById('imageInput').files[0];
-  const seed = document.getElementById('encodeSeed').value;
+  const file = document.getElementById('encryptImage').files[0];
+  const seed = parseInt(document.getElementById('encryptSeed').value, 10);
   if (file && seed) {
-      processImage(file, encodeImage, seed);
-      console.log(file.data);
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+              const canvas = document.getElementById('encryptCanvas');
+              const ctx = canvas.getContext('2d');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0);
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              scramble(imageData.data, seed);
+              ctx.putImageData(imageData, 0, 0);
+
+              canvas.toBlob(function(blob) {
+                  const url = URL.createObjectURL(blob);
+                  const downloadLink = document.getElementById('downloadEncryptedImage');
+                  downloadLink.href = url;
+                  downloadLink.download = 'encrypted_image.png';
+                  downloadLink.style.display = 'block';
+                  downloadLink.textContent = 'Download Encrypted Image';
+              });
+          };
+          img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
   }
 });
 
-document.getElementById('imgDecoder').addEventListener('submit', function(event) {
+document.getElementById('decryptForm').addEventListener('submit', function(event) {
   event.preventDefault();
-  const file = document.getElementById('encodedImageInput').files[0];
-  const seed = document.getElementById('decodeSeed').value;
+  const file = document.getElementById('decryptImage').files[0];
+  const seed = parseInt(document.getElementById('decryptSeed').value, 10);
   if (file && seed) {
-      processImage(file, decodeImage, seed);
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+              const canvas = document.getElementById('decryptCanvas');
+              const ctx = canvas.getContext('2d');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0);
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              unscramble(imageData.data, seed);
+              ctx.putImageData(imageData, 0, 0);
+
+              const decryptedImg = document.getElementById('decryptedImage');
+              decryptedImg.src = canvas.toDataURL();
+              decryptedImg.style.display = 'block';
+          };
+          img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
   }
 });
+
 
 talkText.addEventListener("submit", (e) => {
     e.preventDefault();
